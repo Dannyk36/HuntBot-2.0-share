@@ -1,0 +1,59 @@
+HuntBot — icon vocabulary
+=================================================================
+The brand uses emoji + unicode glyphs as its entire icon set. No SVG
+icon library, no icon font. Every glyph below appears in the source
+HuntBot 2.0 dashboard at a specific use site. Add to this list with
+intent — don't sprinkle new glyphs without a clear semantic role.
+
+NAVIGATION  (sidebar items, top-level)
+  ⚡   Command Center / urgent action
+  🤖  AI pipeline / headless runs
+  🗂   Jobs list / file tree
+  📄  Documents / generated artifacts
+  📋  Queue / clipboard / form-like collection
+  📊  Funnel / chart / dashboard view
+  🔔  Alerts
+  🪵  Logs
+  📷  Screenshots / Live View
+  ⚙️   Settings
+  🛡   Policy / Guardrails
+  💊  Health
+  ⏰  Scheduler
+  🌐  Browser profiles
+  🔧  Remediation
+  📜  Operator timeline
+  🔄  Takeover / Resume
+
+VERBS  (button labels, inline before the verb)
+  🔍  Discover / Search
+  ⚡   Score
+  ✍    Tailor / Compose
+  📤  Apply / Send
+  ▶    Run / Resume / Play
+  ⏸   Pause
+  ⏹   Stop
+  ↺   Refresh
+  ＋    Add (NOTE: fullwidth plus U+FF0B, not ASCII '+')
+  🗑   Delete / Clear
+  ✓    Approve / Confirm
+  ✕    Close / Cancel
+  👁    Toggle visibility (e.g. show/hide password)
+  💾   Save
+
+STATE  (used in copy + badges)
+  ▸    Collapsed
+  ▾    Expanded
+  →    Navigate / continue
+  ·    Inline meta separator (e.g. "reason: mfa · 3m ago")
+  ✨   "Needs Tailoring" — actionable AI work; the only celebratory glyph
+  ⚠    Takeover required / warning
+  ●    Status dot — "in takeover", "active session"
+
+USAGE RULES
+- Glyph sits LEFT of the verb, with a single space:   "▶ Resume"
+- Color follows surrounding text token. Do NOT recolor native-color
+  emoji (⚠ 🔔 🗑) via mask or filter.
+- Monochrome glyphs (▶ ＋ ✕ ↺ ▸ ▾ · → ✓) inherit color from var(--dk-text)
+  or var(--dk-muted).
+- If a render target can't display emoji (PDF, e-paper), drop the glyph
+  and use the plain verb. Never substitute with an SVG icon library.

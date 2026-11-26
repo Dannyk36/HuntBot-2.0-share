@@ -1,0 +1,22 @@
+# Fictional example only. Replace with your own truthful preferences before use.
+profile:
+  name: Alex Example
+  roles:
+    - software engineer
+    - quality assurance engineer
+  locations:
+    - remote
+  remote_only: true
+  min_salary: 0
+  seniority:
+    - entry
+    - mid
+filters:
+  exclude_keywords: []
+portals:
+  - linkedin
+  - indeed
+  - glassdoor
+runtime:
+  default_mode: headed
+  max_retries: 2

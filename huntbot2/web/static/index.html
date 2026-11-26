@@ -1,0 +1,683 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HuntBot2 Ops Cockpit</title>
+  <link rel="stylesheet" href="colors_and_type.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <svg width="110" viewBox="0 0 800 240" role="img" xmlns="http://www.w3.org/2000/svg" style="display:block">
+      <g font-family="Geist,-apple-system,system-ui,sans-serif" fill="#e8e6df">
+        <text x="392" y="140" text-anchor="end" font-size="56" font-weight="500" letter-spacing="0.5">Danny</text>
+        <line x1="410" y1="92" x2="410" y2="146" stroke="#e8e6df" stroke-width="0.75"></line>
+        <text x="428" y="140" font-size="56" font-weight="300" letter-spacing="1">K36</text>
+      </g>
+    </svg>
+    <span class="sidebar-sub">Ops Cockpit</span>
+  </div>
+  <div id="account-chip" style="display:none;padding:.4rem 1rem .6rem;font-size:.78rem">
+    <div id="account-name" style="font-weight:600"></div>
+    <div id="account-stats" class="muted-label" style="font-size:.72rem;margin:.15rem 0"></div>
+    <div style="display:flex;gap:.4rem;margin-top:.25rem">
+      <button class="btn btn-slate btn-sm" style="font-size:.68rem" onclick="copyInviteLink()" title="Copy a sign-up link to share">＋ Invite</button>
+      <button class="btn btn-slate btn-sm" style="font-size:.68rem" onclick="authLogout()">Sign out</button>
+    </div>
+  </div>
+
+  <div class="sidebar-group">Pipeline</div>
+  <div class="sidebar-item active" data-section="sec-command" onclick="showSection('sec-command')">⚡ Command Center</div>
+  <div class="sidebar-item" data-section="sec-autoapply" onclick="showSection('sec-autoapply')">🕒 Auto-Apply</div>
+  <div class="sidebar-item" data-section="sec-headless" onclick="showSection('sec-headless')">🤖 Run Pipeline</div>
+  <div class="sidebar-item" data-section="sec-jobs" onclick="showSection('sec-jobs')">🗂 Jobs</div>
+  <div class="sidebar-item" data-section="sec-documents" onclick="showSection('sec-documents')">📄 Documents</div>
+  <div class="sidebar-item" data-section="sec-queue" onclick="showSection('sec-queue')">📋 Queue</div>
+  <div class="sidebar-item" data-section="sec-funnel" onclick="showSection('sec-funnel')">📊 Funnel</div>
+
+  <div class="sidebar-group">Monitoring</div>
+  <div class="sidebar-item" data-section="sec-alerts" onclick="showSection('sec-alerts')">
+    🔔 Alerts
+    <span id="alerts-badge" class="sidebar-badge" style="display:none"></span>
+  </div>
+  <div class="sidebar-item" data-section="sec-logs" onclick="showSection('sec-logs')">
+    🪵 Logs
+    <span id="logs-error-badge" class="sidebar-badge" style="display:none"></span>
+  </div>
+  <div class="sidebar-item" data-section="sec-live" onclick="showSection('sec-live')">📷 Live View</div>
+
+  <div class="sidebar-group">Settings &amp; Admin</div>
+  <div class="sidebar-item" data-section="sec-settings" onclick="showSection('sec-settings')">⚙️ Settings</div>
+  <div class="sidebar-item" data-section="sec-admin" onclick="showSection('sec-admin')" id="admin-nav" style="display:none">👑 Admin</div>
+  <div class="sidebar-item sidebar-collapsed" onclick="toggleAdminGroup(this)" id="admin-toggle">▸ More…</div>
+  <div id="admin-extras" style="display:none">
+    <div class="sidebar-item" data-section="sec-policy" onclick="showSection('sec-policy')">🛡 Policy</div>
+    <div class="sidebar-item" data-section="sec-health" onclick="showSection('sec-health')">💊 Health</div>
+    <div class="sidebar-item" data-section="sec-scheduler" onclick="showSection('sec-scheduler')">⏰ Scheduler</div>
+    <div class="sidebar-item" data-section="sec-profiles" onclick="showSection('sec-profiles')">🌐 Profiles</div>
+    <div class="sidebar-item" data-section="sec-remediation" onclick="showSection('sec-remediation')">🔧 Remediation</div>
+    <div class="sidebar-item" data-section="sec-timeline" onclick="showSection('sec-timeline')">📜 Timeline</div>
+    <div class="sidebar-item" data-section="sec-takeover" onclick="showSection('sec-takeover')">🔄 Takeover</div>
+  </div>
+</nav>
+
+<main id="content">
+
+  <!-- Command Center -->
+  <section id="sec-command" class="section">
+  <h2>Command Center</h2>
+  <div id="ops-body"></div>
+
+  <div style="margin-top:1rem;display:flex;gap:.5rem">
+    <input id="add-url-input" type="url" placeholder="Paste job URL to add to pipeline…"
+           style="flex:1" onkeydown="if(event.key==='Enter')addJobUrl()">
+    <button class="btn btn-blue" onclick="addJobUrl()">＋ Add Job</button>
+  </div>
+  <div id="llm-indicator" style="margin-top:.5rem"></div>
+  </section>
+
+  <!-- Admin dashboard -->
+  <section id="sec-admin" class="section">
+    <div class="section-title">Admin</div>
+    <div class="card"><div id="admin-panel"></div></div>
+  </section>
+
+  <!-- Auto-Apply (scheduled) -->
+  <section id="sec-autoapply" class="section">
+    <div class="section-title">Auto-Apply</div>
+    <div class="card"><div id="autoapply-panel"></div></div>
+  </section>
+
+  <!-- Queue -->
+  <section id="sec-queue" class="section">
+    <div class="section-title">Queue</div>
+    <div class="card">
+      <div class="card-label" style="margin-bottom:.5rem">Snapshot</div>
+      <div class="stat-grid" id="queue-tiles"></div>
+      <button class="btn-outline" style="margin-top:.75rem" onclick="refreshQueue()">↺ Refresh</button>
+    </div>
+    <div class="card" style="margin-top:.75rem" id="pending-q-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">
+        <div class="card-label" style="margin:0">Needs Answers <span id="pending-q-count" style="font-size:.8rem;color:var(--amber)"></span></div>
+        <button class="btn btn-slate btn-sm" onclick="refreshQueuePendingQuestions()">↺ Refresh</button>
+      </div>
+      <div class="muted-label" style="font-size:.78rem;margin-bottom:.6rem">Questions from apply runs the bot couldn't answer. Fill them in and save — they'll be used on the next apply.</div>
+      <div id="queue-pending-body"><div class="muted-label">Loading…</div></div>
+      <div id="queue-pending-save-row" style="display:none;margin-top:.75rem">
+        <button class="btn btn-primary" onclick="saveQueuePendingAnswers()">Save Answers &amp; Apply Again</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Takeover / Resume -->
+  <section id="sec-takeover" class="section">
+    <div class="section-title">Takeover / Resume</div>
+    <div class="card">
+      <div class="btn-group">
+        <label>Platform
+          <select id="platformSelect" onchange="refreshWorkflow()">
+            <option value="linkedin">linkedin</option>
+            <option value="indeed">indeed</option>
+            <option value="glassdoor">glassdoor</option>
+            <option value="handshake">handshake</option>
+          </select>
+        </label>
+        <label>Reason
+          <select id="reasonSelect">
+            <option value="login_required">login_required</option>
+            <option value="captcha">captcha</option>
+            <option value="mfa">mfa</option>
+            <option value="manual_review">manual_review</option>
+          </select>
+        </label>
+      </div>
+      <div class="btn-group">
+        <button class="btn-amber" onclick="requestTakeover()">⚠ Request Takeover</button>
+        <button class="btn-blue" onclick="markInTakeover()">● Mark In Takeover</button>
+        <button class="btn-green" onclick="resumeSession()">▶ Resume</button>
+        <button class="btn-slate" onclick="pauseSession()">⏸ Pause</button>
+      </div>
+      <div class="btn-group">
+        <label>Resume step
+          <select id="resumeStepSelect">
+            <option value="open_job">open_job</option>
+            <option value="validate_page">validate_page</option>
+            <option value="fill_form">fill_form</option>
+            <option value="review">review</option>
+            <option value="submit_gate">submit_gate</option>
+          </select>
+        </label>
+        <button class="btn-outline" onclick="setResumeStep()">Set Step</button>
+      </div>
+      <div id="workflowState" style="margin-bottom:.3rem"></div>
+      <div id="resumeStepState" style="font-size:.82rem;color:var(--muted)"></div>
+      <pre id="workflowError" style="margin-top:.5rem;display:none"></pre>
+    </div>
+  </section>
+
+  <!-- Session Health -->
+  <section id="sec-health" class="section">
+    <div class="section-title">Session Health</div>
+    <div class="card"><div id="healthPanel"></div></div>
+  </section>
+
+  <!-- Alerts -->
+  <section id="sec-alerts" class="section">
+    <div class="section-title">Alerts</div>
+    <div class="card">
+      <div class="filter-bar" id="alerts-filters">
+        <button class="filter-btn" data-status="all" onclick="refreshAlerts('all')">All</button>
+        <button class="filter-btn active" data-status="new" onclick="refreshAlerts('new')">New</button>
+        <button class="filter-btn" data-status="acked" onclick="refreshAlerts('acked')">Acked</button>
+        <button class="filter-btn" data-status="resolved" onclick="refreshAlerts('resolved')">Resolved</button>
+      </div>
+      <div id="alerts-list"></div>
+    </div>
+  </section>
+
+  <!-- Guardrail Policy -->
+  <section id="sec-policy" class="section">
+    <div class="section-title">Guardrail Policy</div>
+    <div class="card">
+      <div id="policy-cap-bar" style="margin-bottom:.75rem"></div>
+      <div class="stat-grid" id="policy-tiles" style="margin-bottom:.75rem"></div>
+      <div class="btn-group">
+        <label>Daily apply cap <input id="capInput" type="number" min="1" /></label>
+        <label>Min sec between actions <input id="secInput" type="number" min="0" /></label>
+        <button class="btn-blue" onclick="savePolicy()">Save</button>
+        <button class="btn-green" onclick="approveCheckpoint()">✓ Approve Checkpoint</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scheduler -->
+  <section id="sec-scheduler" class="section">
+    <div class="section-title">Scheduler Controls</div>
+    <div class="card"><div id="schedulerPanel"></div></div>
+  </section>
+
+  <!-- Browser Profiles -->
+  <section id="sec-profiles" class="section">
+    <div class="section-title">Browser Profiles</div>
+    <div class="card"><div id="profiles"></div></div>
+  </section>
+
+  <!-- Remediation -->
+  <section id="sec-remediation" class="section">
+    <div class="section-title">Auto-remediation</div>
+    <div class="card">
+      <div class="btn-group">
+        <label>Alert type
+          <select id="remAlertType">
+            <option value="checkpoint_failed">checkpoint_failed</option>
+            <option value="checkpoint_required">checkpoint_required</option>
+            <option value="guardrail_blocked">guardrail_blocked</option>
+            <option value="profile_inactive">profile_inactive</option>
+            <option value="auth_failure_burst">auth_failure_burst</option>
+            <option value="stale_session">stale_session</option>
+            <option value="scheduler_outside_window">scheduler_outside_window</option>
+          </select>
+        </label>
+        <label>Scope
+          <select id="remScope">
+            <option value="*">* (all)</option>
+            <option value="linkedin">linkedin</option>
+            <option value="indeed">indeed</option>
+            <option value="glassdoor">glassdoor</option>
+          </select>
+        </label>
+        <label><input id="remEnabled" type="checkbox" /> Enabled</label>
+        <label>Cooldown min <input id="remCooldown" type="number" min="0" value="60" /></label>
+        <label>Max/day <input id="remMaxDay" type="number" min="1" value="3" /></label>
+      </div>
+      <div class="btn-group">
+        <button class="btn-blue" onclick="saveRemediationPolicy()">Save Policy</button>
+        <button class="btn-outline" onclick="refreshRemediation()">Refresh</button>
+      </div>
+      <div id="remediationStatus"></div>
+      <div id="remediationRuns"></div>
+    </div>
+  </section>
+
+  <!-- Operator Timeline -->
+  <section id="sec-timeline" class="section">
+    <div class="section-title">Operator Timeline</div>
+    <div class="card"><div id="timelinePanel"></div></div>
+  </section>
+
+  <!-- Logs -->
+  <section id="sec-logs" class="section">
+    <div class="section-title">Logs</div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem;flex-wrap:wrap">
+        <div class="filter-bar" id="logs-filters" style="margin-bottom:0;flex:1">
+          <button class="filter-btn active" data-level="all"   onclick="refreshLogs('all')">All</button>
+          <button class="filter-btn" data-level="error"  onclick="refreshLogs('error')">Errors</button>
+          <button class="filter-btn" data-level="warn"   onclick="refreshLogs('warn')">Warnings</button>
+          <button class="filter-btn" data-level="info"   onclick="refreshLogs('info')">Info</button>
+        </div>
+        <button class="btn btn-slate btn-sm" onclick="clearLogs()" style="white-space:nowrap">🗑 Clear all</button>
+      </div>
+      <div id="logs-list"></div>
+    </div>
+  </section>
+
+  <!-- Live View -->
+  <section id="sec-live" class="section">
+    <div class="section-title">Live View</div>
+    <div class="card">
+      <div id="live-mode-btns" class="btn-group">
+        <button class="btn-blue" data-mode="screenshot" onclick="toggleLiveMode('screenshot')">📷 Screenshot</button>
+        <button class="btn-outline" data-mode="control" onclick="toggleLiveMode('control')">● Live Control</button>
+      </div>
+      <div id="shot-panel">
+        <p id="shotMeta" style="font-size:.82rem;color:var(--muted);margin-bottom:.5rem"></p>
+        <button class="btn-outline" style="margin-bottom:.75rem" onclick="requestScreenshotCapture()">Request Capture</button>
+        <img id="liveShot" class="live-shot" alt="Latest screenshot" />
+      </div>
+      <div id="control-panel" style="display:none">
+        <div class="btn-group">
+          <label>Platform
+            <select id="novnc-platform" onchange="refreshNoVNCStatus()">
+              <option value="linkedin">linkedin</option>
+              <option value="indeed">indeed</option>
+              <option value="glassdoor">glassdoor</option>
+              <option value="handshake">handshake</option>
+            </select>
+          </label>
+          <button id="launch-btn" class="btn-green" onclick="launchBrowser()">▶ Launch Browser</button>
+          <button class="btn-slate" onclick="stopBrowser()">⏹ Stop Browser</button>
+          <button class="btn-slate" onclick="openVncTab()" title="Open VNC in a new browser tab (more reliable)">↗ Open Tab</button>
+        </div>
+        <div id="browser-status" style="margin-bottom:.75rem;font-size:.82rem;color:var(--muted)"></div>
+        <iframe id="novnc-frame" class="novnc-frame" allow="clipboard-read; clipboard-write" src="about:blank"></iframe>
+
+        <div style="margin-top:1rem;border-top:1px solid var(--border);padding-top:.75rem">
+          <p class="section-label" style="margin-bottom:.5rem">Run Pipeline</p>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem">
+            <button class="btn btn-blue"   onclick="runPipelineFromLive('discover')">🔍 Discover</button>
+            <button class="btn btn-purple" onclick="runPipelineFromLive('score')">⚡ Score</button>
+            <button class="btn btn-amber"  onclick="runPipelineFromLive('tailor')">✍ Tailor</button>
+            <button class="btn btn-teal"   onclick="runPipelineFromLive('apply')">📤 Apply</button>
+            <button class="btn btn-green"  onclick="runPipelineFromLive('all')">▶ Run All</button>
+          </div>
+          <div id="live-pipeline-log" class="pipeline-log"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pipeline Funnel -->
+  <section id="sec-funnel" class="section">
+    <div class="section-title">Pipeline Funnel</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;align-items:start">
+      <div class="card" style="margin:0"><div id="funnel-body"></div></div>
+      <div class="card" style="margin:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">
+          <div class="card-label" style="margin:0">Last Pipeline Run</div>
+          <button class="btn btn-slate btn-sm" onclick="refreshLastRun()">↺ Refresh</button>
+        </div>
+        <div id="last-run-body"><div class="muted-label">No runs recorded yet.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pipeline Jobs -->
+  <section id="sec-jobs" class="section">
+    <div class="section-title">Jobs</div>
+    <div class="card">
+      <div class="filter-bar" id="jobs-filters">
+        <button class="filter-btn active" data-tab="all" onclick="refreshPipelineJobs('all')">
+          All <span class="tab-count" id="jc-all"></span>
+        </button>
+        <button class="filter-btn" data-tab="to-score" onclick="refreshPipelineJobs('to-score')">
+          Needs Scoring <span class="tab-count" id="jc-to-score"></span>
+        </button>
+        <button class="filter-btn filter-btn-tailor" data-tab="to-tailor" onclick="refreshPipelineJobs('to-tailor')">
+          ✨ Needs Tailoring <span class="tab-count" id="jc-to-tailor"></span>
+        </button>
+        <button class="filter-btn" data-tab="to-apply" onclick="refreshPipelineJobs('to-apply')">
+          Ready to Apply <span class="tab-count" id="jc-to-apply"></span>
+        </button>
+        <button class="filter-btn" data-tab="applied" onclick="refreshPipelineJobs('applied')">
+          Applied <span class="tab-count" id="jc-applied"></span>
+        </button>
+      </div>
+      <div id="jobs-list"></div>
+    </div>
+  </section>
+
+  <!-- Generated Documents -->
+  <section id="sec-documents" class="section">
+    <div class="section-title">Generated Documents</div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;gap:.5rem;flex-wrap:wrap">
+        <div class="card-label" style="margin:0">Tailored resumes &amp; cover letters</div>
+        <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+          <button class="btn btn-slate btn-sm" style="background:#7f1d1d;color:#fff" onclick="clearAllScreenshots()" title="Delete every apply screenshot to free disk space">🗑 Clear All Screenshots</button>
+          <button class="btn btn-slate btn-sm" onclick="refreshDocuments()">↺ Refresh</button>
+        </div>
+      </div>
+      <div id="documents-list"></div>
+    </div>
+  </section>
+
+  <!-- Background Pipeline Run -->
+  <section id="sec-headless" class="section">
+    <div class="section-title">Background Pipeline</div>
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-label">🤖 Background Pipeline</div>
+      <div class="muted-label" style="margin-bottom:.75rem">
+        Runs in the background using the VNC display — keeps sessions alive and avoids bot detection.
+        Sponsorship sources (e.g. MyVisaJobs) are included automatically if configured in Settings.
+      </div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem">
+        <button class="btn btn-blue"   onclick="runHeadlessPipeline('discover')">🔍 Discover</button>
+        <button class="btn btn-purple" onclick="runHeadlessPipeline('score')">⚡ Score</button>
+        <button class="btn btn-amber"  onclick="runHeadlessPipeline('tailor')">✍ Tailor</button>
+        <button class="btn btn-teal"   onclick="runHeadlessPipeline('apply')">📤 Apply</button>
+        <button class="btn btn-green"  onclick="runHeadlessPipeline('all')">▶ Run All</button>
+      </div>
+      <div id="headless-log" class="pipeline-log" style="min-height:3rem"></div>
+    </div>
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-label">🗑 Document Storage</div>
+      <div class="muted-label" style="margin-bottom:.75rem">
+        Tailored resumes and cover letters are saved to <code>artifacts/</code> on disk.
+        Pruning deletes the oldest files and keeps only the most recent ones.
+        Also runs automatically after each successful apply.
+      </div>
+      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+        <label class="muted-label" style="font-size:.8rem">Keep last</label>
+        <input id="prune-keep" type="number" value="50" min="1" max="500"
+               style="width:5rem;text-align:center">
+        <label class="muted-label" style="font-size:.8rem">artifacts</label>
+        <button class="btn btn-slate btn-sm" onclick="pruneArtifacts()">Prune now</button>
+        <span id="prune-result" class="muted-label" style="font-size:.8rem"></span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label">📋 Add a Sponsorship Source URL</div>
+      <div class="muted-label" style="margin-bottom:.5rem">
+        Jobs discovered from these URLs will automatically receive high sponsorship confidence.
+      </div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.5rem">
+        <button class="btn btn-slate btn-sm" onclick="addSponsorUrl('https://www.myvisajobs.com/Visa-Sponsor-Jobs.htm')">＋ MyVisaJobs</button>
+        <button class="btn btn-slate btn-sm" onclick="addSponsorUrl('https://www.h1bdata.info/index.php')">＋ H1B Data</button>
+      </div>
+      <div style="display:flex;gap:.5rem;margin-bottom:.5rem">
+        <input id="sponsor-url-input" type="url" placeholder="Or paste sponsorship source URL…" style="flex:1">
+        <button class="btn btn-blue btn-sm" onclick="addSponsorUrl(document.getElementById('sponsor-url-input').value)">＋ Add</button>
+      </div>
+      <div id="sponsor-urls-list" class="muted-label" style="font-size:.8rem"></div>
+    </div>
+  </section>
+
+<section id="sec-settings" class="section">
+  <h2>Settings</h2>
+
+  <!-- API Keys -->
+  <div class="card" style="margin-bottom:1rem">
+    <div class="card-label">🔑 API Keys <span class="muted-label">(saved to .env — never committed)</span></div>
+    <div id="api-keys-section">
+      <div class="settings-row">
+        <label class="settings-field-label">Anthropic (Claude)</label>
+        <div class="key-row">
+          <input id="key-anthropic" type="password" placeholder="sk-ant-…" class="settings-input"
+                 onblur="saveApiKey('anthropic', this.value)">
+          <button class="btn btn-slate btn-sm" onclick="toggleKeyVisibility('key-anthropic', this)">👁</button>
+          <button class="btn btn-green btn-sm" onclick="testApiKey('anthropic')" id="test-anthropic">Test</button>
+          <span id="test-anthropic-result"></span>
+        </div>
+      </div>
+      <div class="settings-row">
+        <label class="settings-field-label">OpenAI</label>
+        <div class="key-row">
+          <input id="key-openai" type="password" placeholder="sk-…" class="settings-input"
+                 onblur="saveApiKey('openai', this.value)">
+          <button class="btn btn-slate btn-sm" onclick="toggleKeyVisibility('key-openai', this)">👁</button>
+          <button class="btn btn-green btn-sm" onclick="testApiKey('openai')" id="test-openai">Test</button>
+          <span id="test-openai-result"></span>
+        </div>
+      </div>
+      <div class="settings-row">
+        <label class="settings-field-label">OpenRouter</label>
+        <div class="key-row">
+          <input id="key-openrouter" type="password" placeholder="sk-or-…" class="settings-input"
+                 onblur="saveApiKey('openrouter', this.value)">
+          <button class="btn btn-slate btn-sm" onclick="toggleKeyVisibility('key-openrouter', this)">👁</button>
+          <button class="btn btn-green btn-sm" onclick="testApiKey('openrouter')" id="test-openrouter">Test</button>
+          <span id="test-openrouter-result"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Theme -->
+  <div class="card" style="margin-bottom:1rem">
+    <div class="card-label">🎨 Theme</div>
+    <div class="theme-cards" id="theme-cards">
+      <div class="theme-card" data-theme="dark" onclick="setTheme('dark')">🌙 Dark</div>
+      <div class="theme-card" data-theme="light" onclick="setTheme('light')">☀️ Light</div>
+      <div class="theme-card" data-theme="obsidian" onclick="setTheme('obsidian')">⬛ Obsidian</div>
+    </div>
+  </div>
+
+  <!-- LLM toggle -->
+  <div class="card" style="margin-bottom:1rem">
+    <div class="card-label">🤖 AI-Powered Pipeline</div>
+    <div class="settings-row" style="justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-weight:600">Use AI for scoring, tailoring, and form-filling</div>
+        <div class="muted-label">When off, rule-based engine runs instead — no credits needed</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="llm-toggle" onchange="saveLlmEnabled(this.checked)">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div class="settings-row" style="margin-top:.75rem">
+      <label class="settings-field-label">Provider</label>
+      <select id="llm-provider" class="settings-input" onchange="saveSetting('llm_provider', this.value); updateModelDropdowns(this.value)">
+        <option value="anthropic">Anthropic</option>
+        <option value="openai">OpenAI</option>
+        <option value="openrouter">OpenRouter</option>
+      </select>
+    </div>
+    <div class="settings-row">
+      <label class="settings-field-label">Scoring model</label>
+      <select id="scoring-model" class="settings-input" onchange="saveSetting('scoring_model', this.value)"></select>
+    </div>
+    <div class="settings-row">
+      <label class="settings-field-label">Tailoring model</label>
+      <select id="tailoring-model" class="settings-input" onchange="saveSetting('tailoring_model', this.value)"></select>
+    </div>
+  </div>
+
+  <!-- Discovery -->
+  <div class="card" style="margin-bottom:1rem">
+    <div class="card-label">🔍 Job Discovery</div>
+    <div class="settings-row" style="justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-weight:600">Live discovery</div>
+        <div class="muted-label">Playwright controls the browser to search LinkedIn (and other platforms) in real-time</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="live-discover-toggle" onchange="saveSetting('live_discover', this.checked)">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div class="muted-label" style="margin-top:.4rem;font-size:.78rem">
+      Roles &amp; locations come from <code>config/profile.yml</code>. Set Browser Mode to <strong>Headed</strong> to watch it live in noVNC. When AI Pipeline is ON, the LLM controls the browser and uses judgment to find jobs.
+    </div>
+    <div class="settings-row" style="margin-top:.75rem">
+      <label class="settings-field-label">Discovery model</label>
+      <select id="discovery-model" class="settings-input" onchange="saveSetting('discovery_model', this.value)"></select>
+    </div>
+    <div class="settings-row" style="margin-top:.75rem">
+      <label class="settings-field-label" style="min-width:8rem">Platforms</label>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:.3rem;cursor:pointer">
+          <input type="checkbox" id="portal-linkedin" value="linkedin" onchange="savePortals()"> LinkedIn
+        </label>
+        <label style="display:flex;align-items:center;gap:.3rem;cursor:pointer">
+          <input type="checkbox" id="portal-indeed" value="indeed" onchange="savePortals()"> Indeed
+        </label>
+        <label style="display:flex;align-items:center;gap:.3rem;cursor:pointer">
+          <input type="checkbox" id="portal-glassdoor" value="glassdoor" onchange="savePortals()"> Glassdoor
+        </label>
+        <label style="display:flex;align-items:center;gap:.3rem;cursor:pointer">
+          <input type="checkbox" id="portal-handshake" value="handshake" onchange="savePortals()"> Handshake
+        </label>
+      </div>
+    </div>
+    <div class="settings-row" style="margin-top:.75rem;gap:.75rem;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:.4rem">
+        <label class="settings-field-label" style="min-width:auto;white-space:nowrap">Max jobs</label>
+        <input id="discover-max-jobs" type="number" min="5" max="200" class="settings-input" style="width:70px"
+               onchange="saveSetting('discover_max_jobs', parseInt(this.value))"
+               title="Stop discovery once this many jobs are collected">
+      </div>
+      <div style="display:flex;align-items:center;gap:.4rem">
+        <label class="settings-field-label" style="min-width:auto;white-space:nowrap">Max URLs</label>
+        <input id="discover-max-urls" type="number" min="1" max="20" class="settings-input" style="width:60px"
+               onchange="saveSetting('discover_max_urls', parseInt(this.value))"
+               title="How many search URLs to visit per run">
+      </div>
+      <div style="display:flex;align-items:center;gap:.4rem">
+        <label class="settings-field-label" style="min-width:auto;white-space:nowrap">Max actions/URL</label>
+        <input id="discover-max-actions" type="number" min="5" max="60" class="settings-input" style="width:60px"
+               onchange="saveSetting('discover_max_actions', parseInt(this.value))"
+               title="LLM decisions per search URL (more = deeper scrape, slower)">
+      </div>
+    </div>
+    <div class="muted-label" style="margin-top:.3rem;font-size:.75rem">
+      Runtime ≈ max URLs × max actions × ~4s. Default: 40 jobs · 4 URLs · 15 actions ≈ 4 min max.
+    </div>
+  </div>
+
+  <!-- Pipeline defaults -->
+  <div class="card" style="margin-bottom:1rem">
+    <div class="card-label">⚙️ Pipeline Defaults</div>
+    <div class="settings-row">
+      <label class="settings-field-label">Default submit policy</label>
+      <select id="default-submit-policy" class="settings-input" onchange="saveSetting('submit_policy', this.value)">
+        <option value="stop_before_submit">Stop before submit (safe)</option>
+        <option value="auto_submit">Auto-submit (requires approved checkpoint)</option>
+      </select>
+    </div>
+    <div class="settings-row">
+      <label class="settings-field-label">Browser mode</label>
+      <select id="browser-mode" class="settings-input" onchange="saveSetting('browser_mode', this.value)">
+        <option value="headed">Headed (visible in Live View)</option>
+        <option value="headless">Headless (background)</option>
+      </select>
+    </div>
+    <div class="settings-row">
+      <label class="settings-field-label">Min score threshold</label>
+      <input id="min-score" type="number" min="0" max="100" class="settings-input"
+             style="width:80px" onchange="saveSetting('min_score', parseInt(this.value))">
+    </div>
+  </div>
+
+  <!-- Master Resume -->
+  <div class="card" style="margin-bottom:1rem">
+    <div class="card-label">📄 Master Resume</div>
+    <div class="muted-label" style="margin-bottom:.5rem">Paste your full resume in markdown. Claude tailors from this for each application.</div>
+    <textarea id="master-resume" rows="10" class="settings-input" style="width:100%;font-family:monospace;font-size:.8rem"
+              placeholder="# Your Name&#10;&#10;## Experience&#10;…"></textarea>
+    <button class="btn btn-blue" style="margin-top:.5rem" onclick="saveMasterResume()">💾 Save Resume</button>
+  </div>
+
+  <!-- Discovery URLs -->
+  <div class="card" style="margin-bottom:1rem">
+    <div class="card-label">🔍 Discovery URLs</div>
+    <div class="muted-label" style="margin-bottom:.5rem">Paste LinkedIn (or Indeed/Glassdoor) search URLs. Discover stage visits each one.</div>
+    <div id="discovery-urls-list"></div>
+    <div style="display:flex;gap:.5rem;margin-top:.5rem">
+      <input id="new-discovery-url" type="url" placeholder="https://linkedin.com/jobs/search?…" class="settings-input" style="flex:1">
+      <button class="btn btn-blue" onclick="addDiscoveryUrl()">＋ Add</button>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- Job detail drawer -->
+<div id="drawer-overlay" class="drawer-overlay" onclick="closeDrawer()"></div>
+<div id="job-drawer" class="drawer">
+  <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  <div class="drawer-title" id="drawer-title"></div>
+  <div class="drawer-subtitle" id="drawer-subtitle"></div>
+  <div id="drawer-content"></div>
+</div>
+
+<!-- Auth overlay (login / register) -->
+<div id="auth-overlay" class="drawer-overlay" style="display:none;z-index:200">
+  <div class="card" style="max-width:380px;margin:8vh auto;padding:1.5rem" onclick="event.stopPropagation()">
+    <div class="sidebar-logo" style="margin-bottom:.75rem">HuntBot2 <span>Ops</span></div>
+    <div class="filter-bar" style="margin-bottom:1rem">
+      <button class="filter-btn active" id="auth-tab-login" onclick="authTab('login')">Sign in</button>
+      <button class="filter-btn" id="auth-tab-register" onclick="authTab('register')">Create account</button>
+    </div>
+    <div class="settings-row"><input id="auth-username" class="settings-input" style="width:100%" placeholder="username"></div>
+    <div class="settings-row"><input id="auth-password" type="password" class="settings-input" style="width:100%" placeholder="password (8+ characters)"
+         onkeydown="if(event.key==='Enter')authSubmit()"></div>
+    <div class="settings-row" id="auth-display-row" style="display:none">
+      <input id="auth-display" class="settings-input" style="width:100%" placeholder="your name (shown in the app)"></div>
+    <button class="btn btn-blue" style="width:100%;margin-top:.5rem" onclick="authSubmit()" id="auth-submit-btn">Sign in</button>
+    <div id="auth-error" class="muted-label" style="color:var(--red, #ef4444);font-size:.8rem;margin-top:.5rem"></div>
+    <div class="muted-label" style="font-size:.75rem;margin-top:.75rem">
+      Each account is fully separate: your own job history, templates, schedules, platform logins, and API key.
+    </div>
+    <div class="muted-label" style="font-size:.72rem;margin-top:.5rem;text-align:center">
+      <a href="#" onclick="document.getElementById('auth-overlay').style.display='none';return false">Continue without an account (single-user mode)</a>
+    </div>
+  </div>
+</div>
+
+<!-- Onboarding wizard -->
+<div id="onboard-overlay" class="drawer-overlay" style="display:none;z-index:190">
+  <div class="card" style="max-width:560px;margin:6vh auto;padding:1.5rem;max-height:85vh;overflow:auto" onclick="event.stopPropagation()">
+    <div class="card-label">👋 Welcome — let's set up your job search</div>
+    <div class="muted-label" style="font-size:.8rem;margin-bottom:1rem">
+      These answers teach the system what to look for. You can change everything later in Settings.
+    </div>
+    <div id="onboard-questions"></div>
+
+    <div class="card-label" style="margin-top:1.25rem">📄 Your templates (optional)</div>
+    <div class="muted-label" style="font-size:.78rem;margin-bottom:.5rem">
+      Upload a .docx resume and cover letter. Their formatting is kept exactly — only the
+      [[PLACEHOLDER]] parts are rewritten per job.
+    </div>
+    <div class="settings-row"><label class="settings-field-label">Resume (.docx)</label>
+      <input type="file" id="onboard-resume-file" accept=".docx"></div>
+    <div class="settings-row"><label class="settings-field-label">Cover letter (.docx)</label>
+      <input type="file" id="onboard-cover-file" accept=".docx"></div>
+
+    <div class="card-label" style="margin-top:1.25rem">🔑 Your AI key (optional, recommended)</div>
+    <div class="muted-label" style="font-size:.78rem;margin-bottom:.5rem">
+      Your own private key powers the AI tailoring for your account only. How to get one (≈2 minutes):
+      <ol style="margin:.4rem 0 .4rem 1.2rem;line-height:1.5">
+        <li>Go to <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> and sign up</li>
+        <li>Open <strong>API Keys</strong> in the left menu → <strong>Create Key</strong></li>
+        <li>Copy the key (starts with <code>sk-ant-</code>) and paste it below</li>
+      </ol>
+      Alternatives: <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI</a> ·
+      <a href="https://openrouter.ai/keys" target="_blank">OpenRouter</a>. Without a key the
+      reliable rule-based engine is used instead.
+    </div>
+    <div class="settings-row"><input id="onboard-api-key" type="password" class="settings-input" style="width:100%" placeholder="sk-ant-…"></div>
+
+    <button class="btn btn-green" style="width:100%;margin-top:1rem" onclick="submitOnboarding()">Finish setup →</button>
+    <div id="onboard-error" class="muted-label" style="color:#ef4444;font-size:.8rem;margin-top:.5rem"></div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="app.js"></script>
+</body>
+</html>

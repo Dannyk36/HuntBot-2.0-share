@@ -1,0 +1,170 @@
+/* ───────────────────────────────────────────────────────────────────────────
+   HuntBot design tokens
+   Lifted from huntbot2/web/static/styles.css and the refined wordmark.
+   Use these as the single source of truth across every prototype, slide,
+   and UI kit in this design system.
+   ──────────────────────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap');
+
+:root {
+  /* ── Surface scale (default = "dark" / midnight slate) ─────────────── */
+  --dk-bg:        #0f172a;   /* page background — slate-900 */
+  --dk-sidebar:   #0a1020;   /* deeper than bg; chrome only */
+  --dk-surface:   #1e293b;   /* card / panel */
+  --dk-surface-2: #1a2535;   /* table-row hover, secondary fill */
+  --dk-border:    #334155;   /* hairlines, dividers, outlines */
+
+  /* ── Text scale ────────────────────────────────────────────────────── */
+  --dk-text:      #e2e8f0;   /* primary copy */
+  --dk-muted:     #94a3b8;   /* secondary copy, labels */
+  --dk-dim:       #64748b;   /* timestamps, helper text */
+
+  /* ── Brand accent ──────────────────────────────────────────────────── */
+  --dk-blue:      #3b82f6;   /* primary action / active state */
+  --dk-blue-dim:  #1e3a5f;   /* tinted background for blue-state */
+  --dk-blue-bg:   #1d4ed8;   /* solid CTA */
+
+  /* ── Status colors (fg + dim-bg pairs) ─────────────────────────────── */
+  --dk-green:     #4ade80;   --dk-green-bg:  #15803d;   --dk-green-dim: #14532d;   --dk-green-deep: #052e16;
+  --dk-amber:     #fbbf24;   --dk-amber-bg:  #b45309;   --dk-amber-dim: #451a03;
+  --dk-red:       #f87171;   --dk-red-bg:    #991b1b;   --dk-red-dim:   #7f1d1d;
+  --dk-purple:    #a78bfa;   --dk-purple-bg: #7c3aed;   --dk-purple-dim:#2d1b69;
+  --dk-teal:      #2dd4bf;   --dk-teal-bg:   #0f766e;   --dk-teal-dim:  #042f2e;
+  --dk-slate:     #475569;
+
+  /* ── Semantic foreground/background pairs ──────────────────────────── */
+  --dk-info-fg:   #60a5fa;   --dk-info-bg:   var(--dk-blue-dim);
+  --dk-ok-fg:     var(--dk-green);   --dk-ok-bg:     var(--dk-green-deep);
+  --dk-warn-fg:   var(--dk-amber);   --dk-warn-bg:   var(--dk-amber-dim);
+  --dk-crit-fg:   #fca5a5;           --dk-crit-bg:   var(--dk-red-dim);
+
+  /* ── Typography ────────────────────────────────────────────────────── */
+  --dk-font-sans: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --dk-font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* type scale — geared for dense dashboards, not marketing pages */
+  --dk-size-xs:    .68rem;   /* sidebar group labels (UPPER) */
+  --dk-size-tiny:  .72rem;   /* funnel labels, helper meta */
+  --dk-size-sm:    .82rem;   /* body / row text */
+  --dk-size-base:  .85rem;   /* default body */
+  --dk-size-md:    1rem;     /* drawer titles */
+  --dk-size-lg:    1.1rem;   /* section title */
+  --dk-size-xl:    1.6rem;   /* stat-tile numbers */
+  --dk-size-hero:  4rem;     /* big hero numerals; logo size */
+
+  --dk-weight-regular:  400;
+  --dk-weight-medium:   500;
+  --dk-weight-semibold: 600;
+  --dk-weight-bold:     700;
+
+  --dk-letter-tight:    -0.02em;   /* body display */
+  --dk-letter-display:  -0.045em;  /* hero numerals; matches HuntBot logo */
+  --dk-letter-upper:    .06em;     /* uppercased section labels */
+
+  /* ── Spacing scale (matches the cockpit's lived-in rhythm) ─────────── */
+  --dk-space-1: .25rem;   /* 4px  — chip padding */
+  --dk-space-2: .4rem;    /* 6px  — toolbar gaps */
+  --dk-space-3: .5rem;    /* 8px  — row gaps */
+  --dk-space-4: .75rem;   /* 12px — between cards */
+  --dk-space-5: 1rem;     /* 16px — card padding */
+  --dk-space-6: 1.5rem;   /* 24px — content padding */
+  --dk-space-7: 2rem;     /* 32px — section separation */
+
+  /* ── Radius ────────────────────────────────────────────────────────── */
+  --dk-radius-xs: 3px;
+  --dk-radius-sm: 4px;
+  --dk-radius-md: 6px;
+  --dk-radius-lg: 8px;
+  --dk-radius-pill: 99px;
+
+  /* ── Elevation ─────────────────────────────────────────────────────── */
+  --dk-shadow-card:  0 1px 0 rgba(0,0,0,.25);
+  --dk-shadow-drawer: -6px 0 24px rgba(0,0,0,.45);
+  --dk-shadow-pulse: 0 0 0 4px rgba(251,191,36,.25);
+
+  /* ── Sidebar geometry ──────────────────────────────────────────────── */
+  --dk-sidebar-w: 182px;
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   Obsidian theme — high-contrast, pure black + white
+   ──────────────────────────────────────────────────────────────────────── */
+[data-theme="obsidian"] {
+  --dk-bg:        #111111;
+  --dk-sidebar:   #0a0a0a;
+  --dk-surface:   #1a1a1a;
+  --dk-surface-2: #1f1f1f;
+  --dk-border:    #2a2a2a;
+  --dk-text:      #ffffff;
+  --dk-muted:     #888888;
+  --dk-dim:       #444444;
+  --dk-blue:      #ffffff;     /* in obsidian, white IS the accent */
+  --dk-blue-bg:   #ffffff;
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   Light theme — daylight equivalents
+   ──────────────────────────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --dk-bg:        #f8fafc;
+  --dk-sidebar:   #1e293b;     /* chrome stays dark for legibility */
+  --dk-surface:   #ffffff;
+  --dk-surface-2: #f1f5f9;
+  --dk-border:    #e2e8f0;
+  --dk-text:      #0f172a;
+  --dk-muted:     #64748b;
+  --dk-dim:       #94a3b8;
+  --dk-blue:      #2563eb;
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   Semantic element styles (drop into any HTML; opt-in)
+   ──────────────────────────────────────────────────────────────────────── */
+.dk {
+  font-family: var(--dk-font-sans);
+  background: var(--dk-bg);
+  color: var(--dk-text);
+  font-size: var(--dk-size-base);
+  line-height: 1.45;
+}
+
+.dk h1, .dk .h1 {
+  font-size: var(--dk-size-hero);
+  font-weight: var(--dk-weight-semibold);
+  letter-spacing: var(--dk-letter-display);
+  line-height: 1.02;
+}
+.dk h2, .dk .h2 {
+  font-size: var(--dk-size-lg);
+  font-weight: var(--dk-weight-semibold);
+  letter-spacing: var(--dk-letter-tight);
+}
+.dk h3, .dk .h3 {
+  font-size: var(--dk-size-sm);
+  font-weight: var(--dk-weight-semibold);
+  color: var(--dk-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--dk-letter-upper);
+}
+.dk p, .dk .body { font-size: var(--dk-size-sm); color: var(--dk-text); }
+.dk .muted    { color: var(--dk-muted); }
+.dk .dim      { color: var(--dk-dim); }
+.dk code, .dk .mono {
+  font-family: var(--dk-font-mono);
+  font-size: var(--dk-size-sm);
+  background: var(--dk-border);
+  padding: .15rem .35rem;
+  border-radius: var(--dk-radius-xs);
+}
+.dk .label-upper {
+  font-size: var(--dk-size-xs);
+  color: var(--dk-dim);
+  text-transform: uppercase;
+  letter-spacing: var(--dk-letter-upper);
+}
+.dk .display-num {
+  font-size: var(--dk-size-xl);
+  font-weight: var(--dk-weight-bold);
+  font-variant-numeric: tabular-nums;
+}

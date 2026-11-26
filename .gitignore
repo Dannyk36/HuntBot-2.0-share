@@ -1,0 +1,43 @@
+# Personal document templates (binary, contain personal info)
+config/*.docx
+
+# Runtime data and local browser/account state
+data/
+artifacts/
+outputs/
+browser-profiles/
+profiles/
+.hermes/
+.pytest_cache/
+*.db
+*.db-shm
+*.db-wal
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+.env.*
+!.env.*.example
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Personal data — keep templates and profile.yml structure, but never commit PII
+config/candidate_profile.yml
+config/master_resume.md
+config/cover_letter_template.md
+
+# Dev/agent scratch state
+.claude/scheduled_tasks.lock
+.superpowers/
+docs/superpowers/
